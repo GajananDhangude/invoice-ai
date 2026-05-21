@@ -1,0 +1,10 @@
+langchain
+python-multipart
+langchain-google-genai
+python-dotenv
+pydantic
+pdf2image
+groq
+langchain-groq
+langchain-community
+pymupdf
