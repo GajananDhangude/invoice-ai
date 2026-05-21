@@ -1,2 +1,0 @@
-invoice_number,invoice_date,vendor_name,vendor_gst,net_amount,taxable_amount,vendor_code,hsn_code,billing_period,place_of_supply,gst_rate,cgst,sgst,igst
-AIN2526001124876,2025-07-02,Amazon Web Services India Private Limited,07AAJCA9880A1ZL,2712845.83,2299021.89,AMAZONWEBS,998315,"June 1 - June 30, 2025",Tamil Nadu,18.0,0.0,0.0,413823.94

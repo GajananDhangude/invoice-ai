@@ -138,7 +138,7 @@ if __name__ == "__main__":
     from datetime import date
     from models.invoice_model import InvoiceExtract
     from core.journal_builder import build_journal_entries
-    from core.extractor import generate_response
+    from backend.services.generate_response import generate_response
 
     invoice = generate_response('./uploads/AMAZON.pdf')
 
