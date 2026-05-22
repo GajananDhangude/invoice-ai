@@ -1,10 +1,9 @@
 import { NavLink } from "react-router-dom";
-import { LayoutDashboard, FileUp, History } from "lucide-react";
+import { LayoutDashboard, FileUp } from "lucide-react";
 
 const navItems = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
   { to: "/upload", label: "Upload", icon: FileUp },
-  { to: "/history", label: "History", icon: History },
 ];
 
 export default function Sidebar() {

@@ -2,12 +2,10 @@ import { BrowserRouter, Routes, Route, Navigate, NavLink } from "react-router-do
 import Sidebar from "./components/Sidebar.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import Upload from "./pages/Upload.jsx";
-import History from "./pages/History.jsx";
 
 const mobileNav = [
   { to: "/", label: "Dashboard" },
   { to: "/upload", label: "Upload" },
-  { to: "/history", label: "History" },
 ];
 
 export default function App() {
@@ -46,7 +44,6 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/upload" element={<Upload />} />
-            <Route path="/history" element={<History />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>

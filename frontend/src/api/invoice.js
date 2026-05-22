@@ -4,10 +4,6 @@ const api = axios.create({
   baseURL: "/api",
 });
 
-export const getStats = () => api.get("/stats");
-
-export const getHistory = () => api.get("/history");
-
 export const extractInvoice = (file) => {
   const formData = new FormData();
   formData.append("file", file);
