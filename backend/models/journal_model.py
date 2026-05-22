@@ -144,7 +144,7 @@ class JournalEntryInvoice(BaseModel):
         default=None,
         description="HSN or SAC code — filled only on GST rows"
     )
-    taxable_on_amount: Optional[float] = Field(
+    taxable_amount: Optional[float] = Field(
         default=None,
         description="Taxable amount before GST — filled only on GST rows"
     )
@@ -152,7 +152,7 @@ class JournalEntryInvoice(BaseModel):
         default=None,
         description="Y or N — not applicable"
     )
-    reverse_charge_pct: Optional[float] = Field(
+    reverse_charge_percent: Optional[float] = Field(
         default=None,
         description="Not applicable"
     )
@@ -170,7 +170,7 @@ class JournalEntryInvoice(BaseModel):
     )
 
     # --- GST / Challan Reference ---
-    original_invoice_no: Optional[str] = Field(
+    original_invoice_no_for_dr_cr_notes: Optional[str] = Field(
         default=None,
         description="Royal Sundaram's own GST number"
     )

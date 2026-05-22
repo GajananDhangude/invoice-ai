@@ -104,13 +104,13 @@ def _row_to_values(row: JournalEntryInvoice) -> list:
         row.additional_remarks_2 or "",
         row.credence_description or "",
         row.hsn_sac_no or "",
-        _format_amount(row.taxable_on_amount),
+        _format_amount(row.taxable_amount),
         row.reverse_charge or "",
-        _format_amount(row.reverse_charge_pct),
+        _format_amount(row.reverse_charge_percent),
         row.item_details_sr_no or "",
         row.goods_service or "",
         _format_amount(row.gst_tax_rate),
-        row.original_invoice_no or "",
+        row.original_invoice_no_for_dr_cr_notes or "",
         row.advance_challan_no or "",
     ]
 

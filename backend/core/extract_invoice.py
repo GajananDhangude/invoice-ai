@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 client = genai.Client()
-model = ChatGoogleGenerativeAI(model="gemini-2.5-flash")
+model = ChatGoogleGenerativeAI(model="gemini-3.1-flash-lite")
 
 
 SYSTEM_PROMPT = """

@@ -50,10 +50,10 @@ def _common(invoice: InvoiceExtract) -> dict:
         additional_remarks_2=None,
         credence_description=None,
         reverse_charge=None,
-        reverse_charge_pct=None,
+        reverse_charge_percent=None,
         item_details_sr_no=None,
         goods_service=None,
-        original_invoice_no=RS_GST_NUMBER,
+        original_invoice_no_for_dr_cr_notes=RS_GST_NUMBER,
     )
 
 
@@ -93,7 +93,7 @@ def _row_expense_debit(invoice: InvoiceExtract) -> JournalEntryInvoice:
         branch_analysis_code=BRANCH_CODE,
         tds_applicability_analysis_code="TD02",
         hsn_sac_no=None,
-        taxable_on_amount=None,
+        taxable_amount=None,
         gst_tax_rate=None,
         advance_challan_no=None,
     )
@@ -113,7 +113,7 @@ def _row_igst_debit(invoice: InvoiceExtract) -> JournalEntryInvoice:
         branch_analysis_code=BRANCH_CODE,
         tds_applicability_analysis_code="_NA",
         hsn_sac_no=_safe_hsn(invoice),
-        taxable_on_amount=round(invoice.taxable_amount, 2),
+        taxable_amount=round(invoice.taxable_amount, 2),
         gst_tax_rate=invoice.gst_rate,
         advance_challan_no=EXPENSE_ACCOUNT,
     )
@@ -133,7 +133,7 @@ def _row_sgst_debit(invoice: InvoiceExtract) -> JournalEntryInvoice:
         branch_analysis_code=BRANCH_CODE,
         tds_applicability_analysis_code="_NA",
         hsn_sac_no=_safe_hsn(invoice),
-        taxable_on_amount=round(invoice.taxable_amount, 2),
+        taxable_amount=round(invoice.taxable_amount, 2),
         gst_tax_rate=round(invoice.gst_rate / 2, 2) if invoice.gst_rate else None,
         advance_challan_no=EXPENSE_ACCOUNT,
     )
@@ -153,7 +153,7 @@ def _row_cgst_debit(invoice: InvoiceExtract) -> JournalEntryInvoice:
         branch_analysis_code=BRANCH_CODE,
         tds_applicability_analysis_code="_NA",
         hsn_sac_no=_safe_hsn(invoice),
-        taxable_on_amount=round(invoice.taxable_amount, 2),
+        taxable_amount=round(invoice.taxable_amount, 2),
         gst_tax_rate=round(invoice.gst_rate / 2, 2) if invoice.gst_rate else None,
         advance_challan_no=EXPENSE_ACCOUNT,
     )
@@ -172,7 +172,7 @@ def _row_vendor_credit_net(invoice: InvoiceExtract) -> JournalEntryInvoice:
         reference=_payment_ref(invoice),
         tds_applicability_analysis_code="_NA",
         hsn_sac_no=None,
-        taxable_on_amount=None,
+        taxable_amount=None,
         gst_tax_rate=None,
         advance_challan_no=None,
     )
@@ -192,7 +192,7 @@ def _row_vendor_credit_gst(invoice: InvoiceExtract) -> JournalEntryInvoice:
         reference=_payment_ref(invoice),
         tds_applicability_analysis_code="_NA",
         hsn_sac_no=None,
-        taxable_on_amount=None,
+        taxable_amount=None,
         gst_tax_rate=None,
         advance_challan_no=None,
     )
@@ -212,7 +212,7 @@ def _row_payment_debit(invoice: InvoiceExtract) -> JournalEntryInvoice:
         branch_analysis_code=BRANCH_CODE,
         tds_applicability_analysis_code="_NA",
         hsn_sac_no=None,
-        taxable_on_amount=None,
+        taxable_amount=None,
         gst_tax_rate=None,
         advance_challan_no=None,
     )
@@ -235,7 +235,7 @@ def _row_bank_credit(invoice: InvoiceExtract) -> JournalEntryInvoice:
         tds_applicability_analysis_code="_NA",
 
         hsn_sac_no=None,
-        taxable_on_amount=None,
+        taxable_amount=None,
         gst_tax_rate=None,
         advance_challan_no=None,
     )
