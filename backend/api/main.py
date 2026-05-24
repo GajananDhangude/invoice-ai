@@ -44,36 +44,49 @@ def health():
  
  
 @app.post("/extract")
-async def extract(file: UploadFile = File(...)):
+async def extract(files: list[UploadFile] = File(...)):
     """
     Upload PDF → returns extracted invoice fields as JSON.
     React shows this to user for review.
     """
-    if file.content_type != "application/pdf":
-        raise HTTPException(status_code=400, detail="Only PDF files are accepted")
+    results = []
+
+    for file in files:
+        # if file.content_type != "application/pdf":
+        #     raise HTTPException(status_code=400, detail="Only PDF files are accepted")
  
-    try:
-        pdf_bytes = await file.read()
-        invoice = extract_text(pdf_bytes)
-        return {
-            "success": True,
-            "invoice": invoice.model_dump(mode="json")
-        }
- 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
- 
+        try:
+            pdf_bytes = await file.read()
+            invoice = extract_text(pdf_bytes)
+            results.append({
+                "filename":file.filename,
+                "success": True,
+                "invoice": invoice.model_dump(mode="json")
+            })
+
+        except Exception as e:
+            results.append({
+                "filename": file.filename,
+                "success": False,
+                "error":str(e)
+            })
+        
+        return {"Total Files": len(files), "Results": results}
+    
  
 @app.post("/generate-csv")
-async def generate_csv_endpoint(invoice: InvoiceExtract):
+async def generate_csv_endpoint(invoices: list[InvoiceExtract]):
     """
     Send confirmed invoice data → returns CSV file for download.
     React calls this after user reviews extracted fields.
     """
     try:
-        rows = build_journal_entries(invoice)
-        csv_bytes = generate_csv(rows)
-        filename = f"journal_{invoice.invoice_number}.csv"
+        all_rows = []
+        for invoice in invoices:
+            rows = build_journal_entries(invoice)
+            all_rows.extend(rows)
+        csv_bytes = generate_csv(all_rows)
+        filename = f"journal_entries.csv"
         return Response(
             content=csv_bytes,
             media_type="text/csv",
