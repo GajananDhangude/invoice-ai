@@ -70,8 +70,8 @@ async def extract(files: list[UploadFile] = File(...)):
                 "success": False,
                 "error":str(e)
             })
-        
-        return {"Total Files": len(files), "Results": results}
+
+    return {"Total Files": len(files), "Results": results}
     
  
 @app.post("/generate-csv")
