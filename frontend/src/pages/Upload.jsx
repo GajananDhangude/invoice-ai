@@ -18,19 +18,26 @@ export default function Upload() {
   const [isDragging, setIsDragging] = useState(false);
   const [isExtracting, setIsExtracting] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [invoice, setInvoice] = useState(null);
+  const [results, setResults] = useState([]);
+  const [activeIndex, setActiveIndex] = useState(0);
   const [error, setError] = useState("");
   const [toast, setToast] = useState("");
 
-  const handleFile = async (file) => {
-    if (!file) return;
+  const handleFiles = async (files) => {
+    if (!files?.length) return;
     setError("");
-    setInvoice(null);
+    setResults([]);
+    setActiveIndex(0);
     setIsExtracting(true);
 
     try {
-      const { data } = await extractInvoice(file);
-      setInvoice(data.invoice);
+      const { data } = await extractInvoice(files);
+      const normalizedResults = data.Results || [];
+      setResults(normalizedResults);
+      const firstSuccessIndex = normalizedResults.findIndex(
+        (item) => item.success && item.invoice
+      );
+      setActiveIndex(firstSuccessIndex === -1 ? 0 : firstSuccessIndex);
     } catch (err) {
       setError(err.response?.data?.detail || err.message || "Upload failed.");
     } finally {
@@ -39,28 +46,45 @@ export default function Upload() {
   };
 
   const onFieldChange = (field, value) => {
-    setInvoice((prev) => {
-      if (!prev) return prev;
-      if (numericFields.has(field)) {
-        const parsed = Number(value);
-        return { ...prev, [field]: Number.isNaN(parsed) ? 0 : parsed };
-      }
-      return { ...prev, [field]: value };
-    });
+    setResults((prev) =>
+      prev.map((item, index) => {
+        if (index !== activeIndex || !item.invoice) return item;
+        if (numericFields.has(field)) {
+          const parsed = Number(value);
+          return {
+            ...item,
+            invoice: {
+              ...item.invoice,
+              [field]: Number.isNaN(parsed) ? 0 : parsed,
+            },
+          };
+        }
+        return {
+          ...item,
+          invoice: {
+            ...item.invoice,
+            [field]: value,
+          },
+        };
+      })
+    );
   };
 
   const handleGenerateCsv = async () => {
-    if (!invoice) return;
+    const confirmedInvoices = results
+      .filter((item) => item.success && item.invoice)
+      .map((item) => item.invoice);
+    if (!confirmedInvoices.length) return;
     setIsGenerating(true);
     setError("");
 
     try {
-      const { data } = await generateCsv(invoice);
+      const { data } = await generateCsv(confirmedInvoices);
       const blob = new Blob([data], { type: "text/csv" });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `journal_${invoice.invoice_number || "invoice"}.csv`;
+      link.download = "journal_entries.csv";
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -80,7 +104,7 @@ export default function Upload() {
           Upload GST Invoice
         </div>
         <div className="text-sm text-slate-400">
-          Drag a PDF invoice and let the system auto-generate journal entries.
+          Drag PDF or image invoices and let the system auto-generate journal entries.
         </div>
       </div>
 
@@ -108,8 +132,8 @@ export default function Upload() {
         onDrop={(event) => {
           event.preventDefault();
           setIsDragging(false);
-          const file = event.dataTransfer.files?.[0];
-          handleFile(file);
+          const droppedFiles = Array.from(event.dataTransfer.files || []);
+          handleFiles(droppedFiles);
         }}
         onClick={() => inputRef.current?.click()}
       >
@@ -126,7 +150,7 @@ export default function Upload() {
               <CloudUpload size={28} />
             </div>
             <div className="text-lg font-semibold text-slate-100">
-              Drop your PDF here
+              Drop your PDFs or images here
             </div>
             <div className="text-sm text-slate-400">
               or click to browse files
@@ -136,19 +160,52 @@ export default function Upload() {
         <input
           ref={inputRef}
           type="file"
-          accept="application/pdf"
+          accept="application/pdf,image/*"
+          multiple
           className="hidden"
-          onChange={(event) => handleFile(event.target.files?.[0])}
+          onChange={(event) => {
+            const selectedFiles = Array.from(event.target.files || []);
+            handleFiles(selectedFiles);
+          }}
         />
       </div>
 
-      <InvoicePreview
-        invoice={invoice}
-        onFieldChange={onFieldChange}
-        disabled={isExtracting}
-      />
+      {results.length > 0 && (
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-slate-800/70 bg-slate-900/60 p-4">
+            <div className="text-sm font-semibold text-slate-200">
+              Extracted files
+            </div>
+            <div className="mt-3 grid gap-2">
+              {results.map((item, index) => (
+                <button
+                  key={`${item.filename}-${index}`}
+                  type="button"
+                  onClick={() => setActiveIndex(index)}
+                  className={`flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left text-sm transition ${
+                    index === activeIndex
+                      ? "border-indigo-500/60 bg-indigo-500/10 text-indigo-100"
+                      : "border-slate-800/80 bg-slate-950/40 text-slate-300 hover:border-indigo-400/40"
+                  }`}
+                >
+                  <span className="truncate">{item.filename}</span>
+                  <span className="text-xs uppercase tracking-wide">
+                    {item.success ? "Ready" : "Failed"}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
 
-      {invoice && (
+          <InvoicePreview
+            invoice={results[activeIndex]?.invoice || null}
+            onFieldChange={onFieldChange}
+            disabled={isExtracting}
+          />
+        </div>
+      )}
+
+      {results.some((item) => item.success && item.invoice) && (
         <button
           type="button"
           onClick={handleGenerateCsv}
