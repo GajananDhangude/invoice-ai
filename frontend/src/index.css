@@ -1,13 +1,15 @@
-@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@300;400;500;600&display=swap");
 @import "tailwindcss";
 
 :root {
 	color-scheme: dark;
-	font-family: "Space Grotesk", sans-serif;
-	--bg: #0f172a;
-	--card: #1e293b;
+	font-family: "Sora", sans-serif;
+	--bg: #020817;
+	--card: #0f1729;
+	--border: #1e293b;
 	--accent: #6366f1;
-	--text: #e2e8f0;
+	--accent-soft: rgba(99, 102, 241, 0.2);
+	--text: #f8fafc;
 	--muted: #94a3b8;
 }
 
@@ -22,17 +24,192 @@ body,
 	margin: 0;
 	background: var(--bg);
 	color: var(--text);
+	-webkit-font-smoothing: antialiased;
 }
 
-body {
-	background-image: radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.15), transparent 40%),
-		radial-gradient(circle at 85% 20%, rgba(59, 130, 246, 0.12), transparent 45%),
-		radial-gradient(circle at 30% 85%, rgba(14, 116, 144, 0.15), transparent 40%);
-	background-attachment: fixed;
+body::before {
+	content: "";
+	position: fixed;
+	inset: 0;
+	background-image:
+		radial-gradient(circle at 12% 12%, rgba(99, 102, 241, 0.25) 0%, transparent 45%),
+		radial-gradient(circle at 85% 8%, rgba(168, 85, 247, 0.2) 0%, transparent 38%),
+		radial-gradient(circle at 20% 80%, rgba(14, 165, 233, 0.18) 0%, transparent 50%);
+	pointer-events: none;
+	z-index: -2;
+}
+
+body::after {
+	content: "";
+	position: fixed;
+	inset: 0;
+	background-image:
+		linear-gradient(rgba(148, 163, 184, 0.08) 1px, transparent 1px),
+		linear-gradient(90deg, rgba(148, 163, 184, 0.08) 1px, transparent 1px);
+	background-size: 64px 64px;
+	opacity: 0.18;
+	pointer-events: none;
+	z-index: -3;
 }
 
 .app-shell {
-	min-height: 100%;
+	min-height: 100vh;
 	display: flex;
-	background-color: var(--bg);
+	flex-direction: column;
+}
+
+.page-wrap {
+	max-width: 1200px;
+	margin: 0 auto;
+	width: 100%;
+	padding: 0 1.5rem;
+}
+
+.brand-heading {
+	font-family: "Space Grotesk", sans-serif;
+	letter-spacing: -0.03em;
+}
+
+.text-gradient {
+	background: linear-gradient(100deg, #6366f1, #8b5cf6, #22d3ee);
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
+}
+
+.glass-card {
+	background: rgba(15, 23, 41, 0.7);
+	backdrop-filter: blur(18px);
+	-webkit-backdrop-filter: blur(18px);
+	border: 1px solid rgba(30, 41, 59, 0.8);
+	box-shadow: 0 24px 80px rgba(2, 6, 23, 0.65);
+}
+
+.glow-ring {
+	box-shadow:
+		0 0 0 1px rgba(99, 102, 241, 0.3),
+		0 0 24px rgba(99, 102, 241, 0.35);
+}
+
+.glow-button {
+	position: relative;
+	overflow: hidden;
+}
+
+.glow-button::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.28), transparent 55%);
+	opacity: 0;
+	transition: opacity 0.35s ease;
+}
+
+.glow-button:hover::after {
+	opacity: 1;
+}
+
+.pulse-glow {
+	animation: pulseGlow 2.4s ease-in-out infinite;
+}
+
+.hero-gradient {
+	background: linear-gradient(130deg, rgba(99, 102, 241, 0.35), rgba(168, 85, 247, 0.2), rgba(2, 6, 23, 0.5));
+}
+
+.shimmer {
+	position: relative;
+	overflow: hidden;
+}
+
+.shimmer::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(120deg, transparent 20%, rgba(255, 255, 255, 0.15) 45%, transparent 70%);
+	transform: translateX(-120%);
+	animation: shimmer 2.8s infinite;
+}
+
+.particle-field {
+	position: absolute;
+	inset: 0;
+	overflow: hidden;
+	pointer-events: none;
+	z-index: 0;
+}
+
+.particle {
+	position: absolute;
+	width: 6px;
+	height: 6px;
+	border-radius: 999px;
+	background: rgba(99, 102, 241, 0.4);
+	animation: floatParticle 14s linear infinite;
+}
+
+.particle::after {
+	content: "";
+	position: absolute;
+	inset: -8px;
+	border-radius: 999px;
+	background: radial-gradient(circle, rgba(99, 102, 241, 0.35), transparent 60%);
+}
+
+.typewriter {
+	position: relative;
+	display: inline-block;
+}
+
+.typewriter::after {
+	content: "";
+	position: absolute;
+	right: -8px;
+	top: 2px;
+	width: 2px;
+	height: 1.2em;
+	background: #a5b4fc;
+	animation: caret 0.9s steps(2) infinite;
+}
+
+.animate-fade-up {
+	animation: fadeUp 0.8s ease both;
+}
+
+.shake {
+	animation: shake 0.4s ease;
+}
+
+@keyframes shimmer {
+	0% { transform: translateX(-120%); }
+	100% { transform: translateX(120%); }
+}
+
+@keyframes pulseGlow {
+	0%, 100% { box-shadow: 0 0 28px rgba(99, 102, 241, 0.35); }
+	50% { box-shadow: 0 0 48px rgba(99, 102, 241, 0.6); }
+}
+
+@keyframes floatParticle {
+	0% { transform: translateY(0) translateX(0); opacity: 0; }
+	10% { opacity: 1; }
+	100% { transform: translateY(-120vh) translateX(40px); opacity: 0; }
+}
+
+@keyframes caret {
+	0%, 50% { opacity: 1; }
+	51%, 100% { opacity: 0; }
+}
+
+@keyframes fadeUp {
+	from { opacity: 0; transform: translateY(16px); }
+	to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shake {
+	0%, 100% { transform: translateX(0); }
+	20% { transform: translateX(-6px); }
+	40% { transform: translateX(6px); }
+	60% { transform: translateX(-4px); }
+	80% { transform: translateX(4px); }
 }
