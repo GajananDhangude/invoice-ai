@@ -1,0 +1,47 @@
+{
+  "33AAKCV0156D1ZN": {
+    "vendor_code": "VAULTINFOS",
+    "expense_account": "1310020100",
+    "description": "IT SECURITY EXPENSES",
+    "tds_code": "TD02",
+    "department": "SRO",
+    "branch": "LXS00",
+    "channel": "CC004"
+  },
+  "29AACCI3916L1ZA": {
+    "vendor_code": "INUBESOFTW",
+    "expense_account": "1310020100",
+    "description": "IT CONSULTANCY EXPENSES",
+    "tds_code": "TD02",
+    "department": "SRO",
+    "branch": "LXS00",
+    "channel": "CC004"
+  },
+  "33AABCI3943E1ZY": {
+    "vendor_code": "ICOMMTECH",
+    "expense_account": "1310045200",
+    "description": "HR SOFTWARE EXPENSES",
+    "tds_code": "TD01",
+    "department": "ADM",
+    "branch": "LXS00",
+    "channel": "CC004"
+  },
+  "27AACPM4251D1Z2": {
+    "vendor_code": "TATAPOWER",
+    "expense_account": "1310060100",
+    "description": "ELECTRICITY EXPENSES",
+    "tds_code": "_NA",
+    "department": "ADM",
+    "branch": "LXS00",
+    "channel": "CC004"
+  },
+  "DEFAULT": {
+    "vendor_code": null,
+    "expense_account": "1310020100",
+    "description": "VENDOR EXPENSES",
+    "tds_code": "TD02",
+    "department": "SRO",
+    "branch": "LXS00",
+    "channel": "CC004"
+  }
+}
