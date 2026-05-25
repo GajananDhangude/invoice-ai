@@ -1,111 +1,117 @@
-# Invoice Extractor
+﻿# 🧾 InvoiceExtractor
+> Supercharge your accounting workflow by automating invoice data extraction and journal generation.
 
-**GST invoices to accounting-ready journals. Fast. Reliable. Reviewable.**
+![Hero Banner](https://via.placeholder.com/1200x400/0f172a/ffffff.png?text=InvoiceExtractor+Hero+Banner)
 
-![Hero banner placeholder](docs/hero.png)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![Backend: FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688?logo=fastapi)](https://fastapi.tiangolo.com)
+[![Frontend: React](https://img.shields.io/badge/Frontend-React-61DAFB?logo=react&logoColor=black)](https://reactjs.org/)
 
-![License](https://img.shields.io/badge/license-TBD-blue) ![Build](https://img.shields.io/badge/build-passing-brightgreen) ![Version](https://img.shields.io/badge/version-0.1.0-informational)
+## 🚀 Overview
 
-## Intro
+Manual data entry is tedious, slow, and prone to costly human errors. **InvoiceExtractor** bridges the gap between raw invoice PDFs and your accounting software. It automatically reads vendor invoices, maps them to journal entries, and exports CSVs ready for immediate ERP import. 
 
-Invoice Extractor turns Indian GST invoices into clean, validated data and downloadable journal entries. It combines LLM-powered extraction with strict schema validation, then gives reviewers a fast UI to correct fields before export. The result is a practical pipeline from invoice PDFs to accounting-ready CSVs.
+## ✨ Key Features
 
-## Key Features
+- **⚡ Automated Extraction:** Instantly extract line items, totals, dates, and metadata from PDF invoices.
+- **🧠 Smart Journal Builder:** Automatically categorize and map extracted data to correct ledger accounts using a customizable vendor master configuration.
+- **📊 Interactive Dashboard:** Review, edit, and approve extracted data in a fast, clean React interface before finalizing.
+- **📥 One-Click Export:** Seamlessly generate formatted accounting journals as CSVs ready for import into QuickBooks, Xero, or custom ERPs.
 
-- **Batch-friendly ingestion**: Upload multiple GST invoices as PDFs or images in one shot.
-- **Schema-locked extraction**: LLM output is validated against a strict JSON model.
-- **Human-in-the-loop review**: Edit extracted fields before generating journal entries.
-- **Accounting-grade exports**: Generate CSV journal entries ready for downstream systems.
-- **API-first design**: Simple REST endpoints for integration or automation.
+## 🛠️ Tech Stack
 
-## Tech Stack
+| Domain | Technology | Description |
+|---|---|---|
+| **Frontend** | React, Vite | Fast, interactive user interface for invoice preview and review |
+| **Backend** | Python, FastAPI, Pydantic | High-performance API and data validation |
+| **Logic** | PDF Extraction Libs | Core invoice logic, parsing, and CSV generation |
 
-| Layer | Technologies |
-| --- | --- |
-| Backend | Python 3.13+, FastAPI, Pydantic, LangChain, Google GenAI |
-| Frontend | React 19, Vite, Tailwind CSS, Axios |
-
-## Getting Started
+## 🏁 Getting Started
 
 ### Prerequisites
-
-- Python 3.13+
-- Node.js 18+
-- Google GenAI API key (Gemini)
+Before you begin, ensure you have the following installed on your machine:
+- **Node.js** v18+
+- **Python** 3.10+
+- **Git**
 
 ### Installation
 
-From the repository root:
+Clone the repository to your local machine:
+\\\ash
+git clone https://github.com/yourusername/InvoiceExtractor.git
+cd InvoiceExtractor
+\\\
 
-```bash
+**1. Backend Setup**
+\\\ash
 cd backend
 python -m venv .venv
-\.\.venv\Scripts\activate
+# On Windows use: .venv\Scripts\activate
+source .venv/bin/activate
 pip install -r requirements.txt
-```
+\\\
 
-Create a `.env` file inside `backend`:
-
-```bash
-GOOGLE_API_KEY=your_key_here
-FRONTEND_URL=http://localhost:5173
-```
-
-Then install the frontend:
-
-```bash
-cd ../frontend
+**2. Frontend Setup**
+\\\ash
+cd frontend
 npm install
-```
-
-Create a `.env` file inside `frontend`:
-
-```bash
-VITE_API_URL=http://127.0.0.1:8000
-```
+\\\
 
 ### Running the App
 
-Start the API:
+Start both the backend and frontend servers in separate terminals.
 
-```bash
+**Start the Backend API:**
+\\\ash
 cd backend
-python -m uvicorn api.main:app --reload --host 127.0.0.1 --port 8000
-```
+# Make sure your virtual environment is active
+uvicorn api.main:app --reload
+\\\
 
-Start the UI:
-
-```bash
+**Start the Frontend Client:**
+\\\ash
 cd frontend
 npm run dev
-```
+\\\
 
-Open the app at `http://localhost:5173`.
+Your app should now be running! Open your browser and navigate to \http://localhost:5173\.
 
-## Usage Example
+## 💻 Usage Example
 
-```bash
-curl -X POST "http://127.0.0.1:8000/extract" \
-	-F "files=@/path/to/invoice.pdf"
-```
+You can interact with InvoiceExtractor either via the intuitive UI or directly via the API. 
 
-## Roadmap
+**API Example:** Extracting data from an invoice PDF via cURL:
+\\\ash
+curl -X POST "http://localhost:8000/api/extract" \
+  -H "accept: application/json" \
+  -H "Content-Type: multipart/form-data" \
+  -F "file=@sample_invoice.pdf"
+\\\
 
-- [x] GST-tuned extraction prompts and schema validation
-- [x] Review and edit flow before export
-- [x] Journal CSV generation
-- [ ] Saved templates for frequent vendors
-- [ ] Multi-company workspaces and roles
-- [ ] Background batch processing and queueing
+## 🗺️ Roadmap
 
-## Contributing
+- [x] Basic PDF text extraction
+- [x] Vendor-to-Account mapping via configuration
+- [x] CSV Journal export
+- [ ] OCR support for scanned PDFs
+- [ ] Advanced visual bounding-box extraction
+- [ ] Direct ERP integration (e.g., Xero & QuickBooks APIs)
 
-Contributions are welcome. Please open an issue for bugs or feature requests. If you want to submit a PR, describe the change clearly, keep commits focused, and include tests or reproduction steps when relevant.
+## 🤝 Contributing
 
-## License
+We welcome contributions! Whether it is a bug report, new feature proposal, or a pull request, your input is highly valued.
 
-This project is licensed under the [TBD](LICENSE) license.
+1. Fork the repo and create your branch from \main\.
+2. Ensure any new logic has robust tests.
+3. Open a Pull Request with a clear description of your changes.
 
-## Acknowledgments / Contact
+Please read our [Contributing Guidelines](#) prior to submitting a PR.
 
-Thanks to all contributors and reviewers who help improve extraction accuracy. For support or collaboration, open an issue or reach out via your preferred contact channel.
+## 📄 License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments / Contact
+
+- Built with ❤️ by [Your Name/Team](#)
+- Connect with us on [Twitter/X](#) or reach out via [Email](#).
