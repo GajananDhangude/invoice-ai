@@ -1,25 +1,29 @@
-## Invoice Extractor
+# Invoice Extractor
 
-Extract structured data from Indian GST invoices and generate accounting-ready journal entries. The system combines a FastAPI backend that performs LLM-powered extraction with a React + Vite frontend for review and CSV export.
+**GST invoices to accounting-ready journals. Fast. Reliable. Reviewable.**
+
+![Hero banner placeholder](docs/hero.png)
+
+![License](https://img.shields.io/badge/license-TBD-blue) ![Build](https://img.shields.io/badge/build-passing-brightgreen) ![Version](https://img.shields.io/badge/version-0.1.0-informational)
+
+## Intro
+
+Invoice Extractor turns Indian GST invoices into clean, validated data and downloadable journal entries. It combines LLM-powered extraction with strict schema validation, then gives reviewers a fast UI to correct fields before export. The result is a practical pipeline from invoice PDFs to accounting-ready CSVs.
 
 ## Key Features
 
-- Batch upload GST invoices (PDF or images)
-- LLM extraction into a validated JSON schema
-- Review and edit extracted fields before export
-- Generate journal entry CSV for downstream accounting systems
-- Simple REST API for integration
-
-## Architecture
-
-- Backend: FastAPI service that accepts files, runs extraction, and builds CSV
-- Frontend: React UI for upload, review, and download
-- Data rules: GST-specific parsing rules enforced in the extraction prompt
+- **Batch-friendly ingestion**: Upload multiple GST invoices as PDFs or images in one shot.
+- **Schema-locked extraction**: LLM output is validated against a strict JSON model.
+- **Human-in-the-loop review**: Edit extracted fields before generating journal entries.
+- **Accounting-grade exports**: Generate CSV journal entries ready for downstream systems.
+- **API-first design**: Simple REST endpoints for integration or automation.
 
 ## Tech Stack
 
-- Python 3.13+, FastAPI, Pydantic, LangChain, Google GenAI
-- React 19, Vite, Tailwind CSS, Axios
+| Layer | Technologies |
+| --- | --- |
+| Backend | Python 3.13+, FastAPI, Pydantic, LangChain, Google GenAI |
+| Frontend | React 19, Vite, Tailwind CSS, Axios |
 
 ## Getting Started
 
@@ -27,87 +31,81 @@ Extract structured data from Indian GST invoices and generate accounting-ready j
 
 - Python 3.13+
 - Node.js 18+
-- A Google GenAI API key (for Gemini)
+- Google GenAI API key (Gemini)
 
-### Backend Setup
+### Installation
 
 From the repository root:
 
 ```bash
 cd backend
 python -m venv .venv
-.\.venv\Scripts\activate
+\.\.venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-Create a `.env` file inside `backend` with:
+Create a `.env` file inside `backend`:
 
 ```bash
 GOOGLE_API_KEY=your_key_here
 FRONTEND_URL=http://localhost:5173
 ```
 
-Run the API:
+Then install the frontend:
 
 ```bash
-python -m uvicorn api.main:app --reload --host 127.0.0.1 --port 8000
-```
-
-### Frontend Setup
-
-From the repository root:
-
-```bash
-cd frontend
+cd ../frontend
 npm install
 ```
 
-Create a `.env` file inside `frontend` with:
+Create a `.env` file inside `frontend`:
 
 ```bash
 VITE_API_URL=http://127.0.0.1:8000
 ```
 
+### Running the App
+
+Start the API:
+
+```bash
+cd backend
+python -m uvicorn api.main:app --reload --host 127.0.0.1 --port 8000
+```
+
 Start the UI:
 
 ```bash
+cd frontend
 npm run dev
 ```
 
 Open the app at `http://localhost:5173`.
 
-## API Overview
+## Usage Example
 
-Base URL: `http://127.0.0.1:8000`
+```bash
+curl -X POST "http://127.0.0.1:8000/extract" \
+	-F "files=@/path/to/invoice.pdf"
+```
 
-- `GET /` Health message and docs link
-- `GET /health` Service health check
-- `POST /extract` Upload files and return extracted fields
-- `POST /generate-csv` Submit confirmed invoices and download CSV
+## Roadmap
 
-Swagger UI is available at `http://127.0.0.1:8000/docs`.
+- [x] GST-tuned extraction prompts and schema validation
+- [x] Review and edit flow before export
+- [x] Journal CSV generation
+- [ ] Saved templates for frequent vendors
+- [ ] Multi-company workspaces and roles
+- [ ] Background batch processing and queueing
 
-## Environment Variables
+## Contributing
 
-Backend:
-
-- `GOOGLE_API_KEY` (required) Google GenAI key
-- `FRONTEND_URL` (optional) Allowlist for CORS
-
-Frontend:
-
-- `VITE_API_URL` (required) Base URL for the backend API
-
-## Notes
-
-- The extractor is tuned for Indian GST invoices and will enforce GST-specific rules.
-- If you run in a different environment, update CORS and API URLs accordingly.
-
-## Troubleshooting
-
-- If requests fail with CORS errors, confirm `FRONTEND_URL` matches the UI origin.
-- If extraction fails, verify the GenAI key and internet access.
+Contributions are welcome. Please open an issue for bugs or feature requests. If you want to submit a PR, describe the change clearly, keep commits focused, and include tests or reproduction steps when relevant.
 
 ## License
 
-Specify your license here.
+This project is licensed under the [TBD](LICENSE) license.
+
+## Acknowledgments / Contact
+
+Thanks to all contributors and reviewers who help improve extraction accuracy. For support or collaboration, open an issue or reach out via your preferred contact channel.
