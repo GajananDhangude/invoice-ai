@@ -1,27 +1,45 @@
+import json
+import os
 from models.invoice_model import InvoiceExtract
 from models.journal_model import JournalEntryInvoice
 
 # ---------------------------------------------------------------------------
-# Config
+# Fixed constants — never change
 # ---------------------------------------------------------------------------
-EXPENSE_ACCOUNT      = "1310020100"
 CGST_INPUT_ACCOUNT   = "1120599007"
 SGST_INPUT_ACCOUNT   = "1120599005"
 IGST_INPUT_ACCOUNT   = "1120599003"
 BANK_ACCOUNT         = "1113411000"
-
-RS_GST_NUMBER        = "33AABCR7106G2ZP"
+RS_GST_NUMBER        = "33AABCR7106G1ZQ"   # FIX 1
 ACC_PERIOD           = "2026/001"
-BRANCH_CODE          = "LXS00"
-CHANNEL_CODE         = "CC004"
-DEPARTMENT_CODE      = "SRO"
+
+# ---------------------------------------------------------------------------
+# Vendor master loader
+# ---------------------------------------------------------------------------
+VENDOR_MASTER_PATH = os.path.join(
+    os.path.dirname(__file__), "../config/vendor_master.json"
+)
+
+def _load_vendor_config(vendor_gst: str) -> dict:
+    """Look up vendor config by GST number, fall back to DEFAULT."""
+    with open(VENDOR_MASTER_PATH, "r") as f:
+        master = json.load(f)
+
+    config = master.get(vendor_gst)
+
+    if config is None:
+        print(f"Vendor {vendor_gst} not in master — using DEFAULT config")
+        config = master["DEFAULT"]
+
+    # Use vendor_code from invoice if not in master
+    return config
+
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _common(invoice: InvoiceExtract) -> dict:
-    """Fields that are the same across every row."""
+def _common(invoice: InvoiceExtract, config: dict) -> dict:
     return dict(
         acc_period=ACC_PERIOD,
         trans_date=invoice.invoice_date,
@@ -30,30 +48,30 @@ def _common(invoice: InvoiceExtract) -> dict:
         asset_code=None,
         asset_indicator=None,
         asset_item_qty=None,
-        due_date=None,                          # date field — None not ""
+        due_date=None,
         product_analysis_code="_NA",
-        channel_analysis_code=CHANNEL_CODE,
+        channel_analysis_code=config["channel"],
         sub_channel_analysis_code="_NA",
         underwriting_year_analysis_code="_NA",
         employee_code_analysis_code="_NA",
-        department_analysis_code=DEPARTMENT_CODE,
-        sequence_code_analysis_code="_NA",
+        department_analysis_code=config["department"],
+        sequence_code_analysis_code=None,          # FIX 3 — blank not _NA
         vendor_code_analysis_code=invoice.vendor_code,
         invoice_date=invoice.invoice_date,
-        from_date=None,                         # date field — None not ""
+        from_date=None,
         to_date=None,
         addl_date_4=None,
         addl_date_5=None,
         cheque_neft_number=invoice.vendor_gst,
         invoice_number=invoice.invoice_number,
         additional_remarks=None,
-        additional_remarks_2=None,
+        additional_remarks_2=invoice.billing_period or None,  # FIX 2
         credence_description=None,
         reverse_charge=None,
         reverse_charge_percent=None,
         item_details_sr_no=None,
         goods_service=None,
-        original_invoice_no_for_dr_cr_notes=RS_GST_NUMBER,
+        original_invoice_no_for_dr_cr_notes=RS_GST_NUMBER,    # FIX 1
     )
 
 
@@ -66,32 +84,29 @@ def _payment_ref(invoice: InvoiceExtract) -> str:
 
 
 def _safe_hsn(invoice: InvoiceExtract) -> str | None:
-    """Return HSN code safely — handles None."""
     if invoice.hsn_code is None:
         return None
-    # Strip decimals if it looks like a number e.g. "998315.0" → "998315"
     if invoice.hsn_code.replace(".", "").isdigit():
         return str(int(float(invoice.hsn_code)))
     return invoice.hsn_code
 
 
 # ---------------------------------------------------------------------------
-# Row builders
+# Row builders — now accept config
 # ---------------------------------------------------------------------------
 
-def _row_expense_debit(invoice: InvoiceExtract) -> JournalEntryInvoice:
-    """Row 1 — Debit expense GL (taxable amount, before GST)."""
+def _row_expense_debit(invoice: InvoiceExtract, config: dict) -> JournalEntryInvoice:
     return JournalEntryInvoice(
-        **_common(invoice),
+        **_common(invoice, config),
         l_id="1;3;6;7",
-        account_code=EXPENSE_ACCOUNT,
-        description="IT CLOUD INFRA EXPENSES",
-        trans_amount=round(invoice.taxable_amount, 2),  # taxable, not net
+        account_code=config["expense_account"],   # dynamic
+        description=config["description"],         # dynamic
+        trans_amount=round(invoice.taxable_amount, 2),
         dr_cr="D",
         jrnal_type="SEXPS",
         reference=_vendor_ref(invoice),
-        branch_analysis_code=BRANCH_CODE,
-        tds_applicability_analysis_code="TD02",
+        branch_analysis_code=config["branch"],
+        tds_applicability_analysis_code=config["tds_code"],  # dynamic
         hsn_sac_no=None,
         taxable_amount=None,
         gst_tax_rate=None,
@@ -99,10 +114,9 @@ def _row_expense_debit(invoice: InvoiceExtract) -> JournalEntryInvoice:
     )
 
 
-def _row_igst_debit(invoice: InvoiceExtract) -> JournalEntryInvoice:
-    """Row 2 inter-state — Debit IGST input credit."""
+def _row_igst_debit(invoice: InvoiceExtract, config: dict) -> JournalEntryInvoice:
     return JournalEntryInvoice(
-        **_common(invoice),
+        **_common(invoice, config),
         l_id="6;7",
         account_code=IGST_INPUT_ACCOUNT,
         description="GST input cr exps-IGST",
@@ -110,19 +124,18 @@ def _row_igst_debit(invoice: InvoiceExtract) -> JournalEntryInvoice:
         dr_cr="D",
         jrnal_type="SEXPS",
         reference=_vendor_ref(invoice),
-        branch_analysis_code=BRANCH_CODE,
+        branch_analysis_code=config["branch"],
         tds_applicability_analysis_code="_NA",
         hsn_sac_no=_safe_hsn(invoice),
         taxable_amount=round(invoice.taxable_amount, 2),
         gst_tax_rate=invoice.gst_rate,
-        advance_challan_no=EXPENSE_ACCOUNT,
+        advance_challan_no=config["expense_account"],  # dynamic
     )
 
 
-def _row_sgst_debit(invoice: InvoiceExtract) -> JournalEntryInvoice:
-    """Row 2 intra-state — Debit SGST input credit."""
+def _row_sgst_debit(invoice: InvoiceExtract, config: dict) -> JournalEntryInvoice:
     return JournalEntryInvoice(
-        **_common(invoice),
+        **_common(invoice, config),
         l_id="6;7",
         account_code=SGST_INPUT_ACCOUNT,
         description="GST input cr exps-SGST",
@@ -130,19 +143,18 @@ def _row_sgst_debit(invoice: InvoiceExtract) -> JournalEntryInvoice:
         dr_cr="D",
         jrnal_type="SEXPS",
         reference=_vendor_ref(invoice),
-        branch_analysis_code=BRANCH_CODE,
+        branch_analysis_code=config["branch"],
         tds_applicability_analysis_code="_NA",
         hsn_sac_no=_safe_hsn(invoice),
         taxable_amount=round(invoice.taxable_amount, 2),
         gst_tax_rate=round(invoice.gst_rate / 2, 2) if invoice.gst_rate else None,
-        advance_challan_no=EXPENSE_ACCOUNT,
+        advance_challan_no=config["expense_account"],  # dynamic
     )
 
 
-def _row_cgst_debit(invoice: InvoiceExtract) -> JournalEntryInvoice:
-    """Row 3 intra-state — Debit CGST input credit."""
+def _row_cgst_debit(invoice: InvoiceExtract, config: dict) -> JournalEntryInvoice:
     return JournalEntryInvoice(
-        **_common(invoice),
+        **_common(invoice, config),
         l_id="6;7",
         account_code=CGST_INPUT_ACCOUNT,
         description="GST input cr exps-CGST",
@@ -150,19 +162,20 @@ def _row_cgst_debit(invoice: InvoiceExtract) -> JournalEntryInvoice:
         dr_cr="D",
         jrnal_type="SEXPS",
         reference=_vendor_ref(invoice),
-        branch_analysis_code=BRANCH_CODE,
+        branch_analysis_code=config["branch"],
         tds_applicability_analysis_code="_NA",
         hsn_sac_no=_safe_hsn(invoice),
         taxable_amount=round(invoice.taxable_amount, 2),
         gst_tax_rate=round(invoice.gst_rate / 2, 2) if invoice.gst_rate else None,
-        advance_challan_no=EXPENSE_ACCOUNT,
+        advance_challan_no=config["expense_account"],  # dynamic
     )
 
 
-def _row_vendor_credit_net(invoice: InvoiceExtract) -> JournalEntryInvoice:
-    """Row 4 — Credit vendor payable net amount (GST02 bucket)."""
+def _row_vendor_credit_net(invoice: InvoiceExtract, config: dict) -> JournalEntryInvoice:
+    common = _common(invoice, config)
+    common["branch_analysis_code"] = "GST02"
     return JournalEntryInvoice(
-        **{**_common(invoice), "branch_analysis_code": "GST02"},
+        **common,
         l_id="6;7",
         account_code=invoice.vendor_code,
         description=invoice.vendor_name,
@@ -178,11 +191,12 @@ def _row_vendor_credit_net(invoice: InvoiceExtract) -> JournalEntryInvoice:
     )
 
 
-def _row_vendor_credit_gst(invoice: InvoiceExtract) -> JournalEntryInvoice:
-    """Row 5 — Credit vendor payable GST amount (GST01 bucket)."""
+def _row_vendor_credit_gst(invoice: InvoiceExtract, config: dict) -> JournalEntryInvoice:
     total_gst = round(invoice.igst or (invoice.cgst + invoice.sgst), 2)
+    common = _common(invoice, config)
+    common["branch_analysis_code"] = "GST01"
     return JournalEntryInvoice(
-        **{**_common(invoice), "branch_analysis_code": "GST01"},
+        **common,
         l_id="6;7",
         account_code=invoice.vendor_code,
         description=invoice.vendor_name,
@@ -198,10 +212,9 @@ def _row_vendor_credit_gst(invoice: InvoiceExtract) -> JournalEntryInvoice:
     )
 
 
-def _row_payment_debit(invoice: InvoiceExtract) -> JournalEntryInvoice:
-    """Row 6 — Debit vendor account (SPYMT payment entry)."""
+def _row_payment_debit(invoice: InvoiceExtract, config: dict) -> JournalEntryInvoice:
     return JournalEntryInvoice(
-        **_common(invoice),
+        **_common(invoice, config),
         l_id="1;3;6;7",
         account_code=invoice.vendor_code,
         description=invoice.vendor_name,
@@ -209,7 +222,7 @@ def _row_payment_debit(invoice: InvoiceExtract) -> JournalEntryInvoice:
         dr_cr="D",
         jrnal_type="SPYMT",
         reference=_payment_ref(invoice),
-        branch_analysis_code=BRANCH_CODE,
+        branch_analysis_code=config["branch"],
         tds_applicability_analysis_code="_NA",
         hsn_sac_no=None,
         taxable_amount=None,
@@ -218,10 +231,10 @@ def _row_payment_debit(invoice: InvoiceExtract) -> JournalEntryInvoice:
     )
 
 
-def _row_bank_credit(invoice: InvoiceExtract) -> JournalEntryInvoice:
-    """Row 7 — Credit bank account (SPYMT payment entry)."""
-    common = _common(invoice)
-    common['additional_remarks'] = 'NEFT'
+def _row_bank_credit(invoice: InvoiceExtract, config: dict) -> JournalEntryInvoice:
+    common = _common(invoice, config)
+    common["additional_remarks"] = "NEFT"
+    common["underwriting_year_analysis_code"] = "EXPMG"  # FIX 4
     return JournalEntryInvoice(
         **common,
         l_id="6;7",
@@ -231,9 +244,8 @@ def _row_bank_credit(invoice: InvoiceExtract) -> JournalEntryInvoice:
         dr_cr="C",
         jrnal_type="SPYMT",
         reference=_payment_ref(invoice),
-        branch_analysis_code=BRANCH_CODE,
+        branch_analysis_code=config["branch"],
         tds_applicability_analysis_code="_NA",
-
         hsn_sac_no=None,
         taxable_amount=None,
         gst_tax_rate=None,
@@ -242,51 +254,33 @@ def _row_bank_credit(invoice: InvoiceExtract) -> JournalEntryInvoice:
 
 
 # ---------------------------------------------------------------------------
-# Main entry point — returns a list of rows, not a single object
+# Main entry point
 # ---------------------------------------------------------------------------
 
 def build_journal_entries(invoice: InvoiceExtract) -> list[JournalEntryInvoice]:
+
+    # Load vendor config — dynamic per vendor
+    config = _load_vendor_config(invoice.vendor_gst)
+
+    # Use vendor_code from master if invoice didn't have one
+    if config["vendor_code"] and not invoice.vendor_code:
+        invoice.vendor_code = config["vendor_code"]
+
     rows = []
 
-    # SEXPS — expense booking
-    rows.append(_row_expense_debit(invoice))
+    rows.append(_row_expense_debit(invoice, config))
 
-    if invoice.igst > 0:
-        rows.append(_row_igst_debit(invoice))       # inter-state
-    else:
-        rows.append(_row_sgst_debit(invoice))       # intra-state
-        rows.append(_row_cgst_debit(invoice))
+    total_gst = invoice.igst or (invoice.cgst + invoice.sgst)
+    if total_gst > 0:
+        if invoice.igst > 0:
+            rows.append(_row_igst_debit(invoice, config))
+        else:
+            rows.append(_row_sgst_debit(invoice, config))
+            rows.append(_row_cgst_debit(invoice, config))
 
-    rows.append(_row_vendor_credit_net(invoice))
-    rows.append(_row_vendor_credit_gst(invoice))
-
-    # SPYMT — payment booking
-    rows.append(_row_payment_debit(invoice))
-    rows.append(_row_bank_credit(invoice))
+    rows.append(_row_vendor_credit_net(invoice, config))
+    rows.append(_row_vendor_credit_gst(invoice, config))
+    rows.append(_row_payment_debit(invoice, config))
+    rows.append(_row_bank_credit(invoice, config))
 
     return rows
-
-
-# ---------------------------------------------------------------------------
-# Quick test
-# ---------------------------------------------------------------------------
-
-# if __name__ == "__main__":
-#     from datetime import date
-
-# #     invoice = InvoiceExtract(
-# #         invoice_number="AIN2526001124876",
-# #         invoice_date=date(2025, 7, 2),
-# #         vendor_name="Amazon Web Services India Private Limited",
-# #         vendor_gst="07AAJCA9880A1ZL",
-# #         net_amount=2712845.83,
-# #         taxable_amount=2299021.89,
-# #         igst=413823.94,
-# #         hsn_code="998315",
-# #         billing_period="June 1 - June 30, 2025",
-# #     )
-#     invoice = gene
-#     rows = build_journal_entries()
-# #     print(rows)
-
-    
