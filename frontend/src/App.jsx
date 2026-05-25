@@ -1,50 +1,51 @@
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
-import { AnimatePresence, motion } from "framer-motion";
-import Navbar from "./components/Navbar.jsx";
+import { BrowserRouter, Routes, Route, Navigate, NavLink } from "react-router-dom";
+import Sidebar from "./components/Sidebar.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import Upload from "./pages/Upload.jsx";
 
-const pageVariants = {
-  initial: { opacity: 0, y: 16 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
-  exit: { opacity: 0, y: -8, transition: { duration: 0.35, ease: "easeIn" } },
-};
-
-function AnimatedRoutes() {
-  const location = useLocation();
-
-  return (
-    <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
-        <Route
-          path="/"
-          element={
-            <motion.div variants={pageVariants} initial="initial" animate="animate" exit="exit">
-              <Dashboard />
-            </motion.div>
-          }
-        />
-        <Route
-          path="/upload"
-          element={
-            <motion.div variants={pageVariants} initial="initial" animate="animate" exit="exit">
-              <Upload />
-            </motion.div>
-          }
-        />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </AnimatePresence>
-  );
-}
+const mobileNav = [
+  { to: "/", label: "Dashboard" },
+  { to: "/upload", label: "Upload" },
+];
 
 export default function App() {
   return (
     <BrowserRouter>
       <div className="app-shell">
-        <Navbar />
-        <main className="page-wrap flex-1 py-12">
-          <AnimatedRoutes />
+        <Sidebar />
+        <main className="flex-1 px-6 py-8 lg:px-10">
+          <div className="mb-6 flex flex-col gap-4 lg:hidden">
+            <div>
+              <div className="text-lg font-semibold text-slate-100">
+                GST Journal
+              </div>
+              <div className="text-xs text-slate-400">
+                Invoice to entry automation
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {mobileNav.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  className={({ isActive }) =>
+                    `rounded-full px-4 py-2 text-xs font-semibold transition ${
+                      isActive
+                        ? "bg-indigo-500/20 text-indigo-200"
+                        : "bg-slate-900/70 text-slate-400 hover:text-slate-200"
+                    }`
+                  }
+                >
+                  {item.label}
+                </NavLink>
+              ))}
+            </div>
+          </div>
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/upload" element={<Upload />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
         </main>
       </div>
     </BrowserRouter>
