@@ -1,10 +1,10 @@
 from fastapi import FastAPI , UploadFile , File , HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
-from core.extract_invoice import extract_text
 from core.csv_writer import generate_csv
 from core.journal_builder import build_journal_entries
 from models.invoice_model import InvoiceExtract
+from core.generate_response import generate_response
 import os
 import uvicorn
 
@@ -57,11 +57,11 @@ async def extract(files: list[UploadFile] = File(...)):
  
         try:
             pdf_bytes = await file.read()
-            invoice = extract_text(pdf_bytes)
+            invoice = generate_response(pdf_bytes)
             results.append({
                 "filename":file.filename,
                 "success": True,
-                "invoice": invoice.model_dump(mode="json")
+                "invoice": invoice
             })
 
         except Exception as e:
