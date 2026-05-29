@@ -1,17 +1,15 @@
 import base64
-import io
-from langchain_community.document_loaders import PyMuPDFLoader
+from models.invoice_model import InvoiceExtract
 from langchain_core.messages import SystemMessage , HumanMessage
 from google import genai
 from langchain_google_genai import ChatGoogleGenerativeAI
 from models.invoice_model import InvoiceExtract
 from dotenv import load_dotenv
-from pdf2image import convert_from_bytes
 
 load_dotenv()
 
 client = genai.Client()
-model = ChatGoogleGenerativeAI(model="gemini-2.5-flash-lite")
+model = ChatGoogleGenerativeAI(model="gemini-3.1-flash-lite")
 
 
 SYSTEM_PROMPT = """
@@ -30,8 +28,12 @@ Your task is to accurately extract structured invoice information from OCR text 
     - vendor_gst is the SELLER's GST number — not the buyer's
     - If IGST is present → cgst and sgst are 0.0
     - If CGST+SGST present → igst is 0.0
-    """
 
+MATHEMATICAL INVARIANT VALIDATION RULE:
+    Before outputting the JSON payload, verify that the fields conform to this exact formula:
+    [taxable_amount] + [cgst] + [sgst] + [igst] must roughly equal [net_amount] (accounting for small rounding variances). 
+    If the 'taxable_amount' you selected does not satisfy this formula balance, you have picked an incorrect intermediate page subtotal line. Recalculate and pull the master total value from the absolute final page matrix.
+"""
 
 
 def extract_text(pdf_bytes: bytes):
@@ -41,14 +43,6 @@ def extract_text(pdf_bytes: bytes):
         print("Reading PDF bytes and encoding to base64")
         pdf_base64 = base64.b64encode(pdf_bytes).decode("utf-8")
         mime_type = "application/pdf"
-
-        # images = convert_from_bytes(pdf_bytes , dpi=300)
-
-        # for img in images:
-        #     buffered = io.BytesIO()
-        #     img.save(buffered, format="PNG")
-        #     image_base64 = base64.b64encode(buffered.getvalue()).decode("utf-8")
-        #     mime_type = "image/png"
 
         human_message = HumanMessage(
             content=[
