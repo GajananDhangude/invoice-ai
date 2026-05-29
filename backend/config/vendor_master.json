@@ -1,8 +1,80 @@
 {
+  "33AAPFG8037J1Z2": {
+    "vendor_code": "GRENCLEAN",
+    "expense_account": "1310020100",
+    "description": "HOUSEKEEPING EXPENSES",
+    "tds_code": "TD02",
+    "department": "ADM",
+    "branch": "LXS00",
+    "channel": "CC004"
+  },
+  "07AGVPT6721E1ZX": {
+    "vendor_code": "SAANVITRD",
+    "expense_account": "1310020100",
+    "description": "OFFICE SUPPLIES EXPENSES",
+    "tds_code": "_NA",
+    "department": "ADM",
+    "branch": "LXS00",
+    "channel": "CC004"
+  },
   "33AAKCV0156D1ZN": {
     "vendor_code": "VAULTINFOS",
     "expense_account": "1310020100",
     "description": "IT SECURITY EXPENSES",
+    "tds_code": "TD02",
+    "department": "SRO",
+    "branch": "LXS00",
+    "channel": "CC004"
+  },
+  "27AACPM4251D1Z2": {
+    "vendor_code": "TATAPOWER",
+    "expense_account": "1310060100",
+    "description": "ELECTRICITY EXPENSES",
+    "tds_code": "_NA",
+    "department": "ADM",
+    "branch": "LXS00",
+    "channel": "CC004"
+  },
+  "27AAACO3683Q1ZS": {
+    "vendor_code": "OECRECDMGT",
+    "expense_account": "1310020100",
+    "description": "RECORDS MANAGEMENT EXPENSES",
+    "tds_code": "TD02",
+    "department": "ADM",
+    "branch": "LXS00",
+    "channel": "CC004"
+  },
+  "33AAOFT6830F1Z2": {
+    "vendor_code": "PROFCOURIE",
+    "expense_account": "1310020100",
+    "description": "COURIER EXPENSES",
+    "tds_code": "_NA",
+    "department": "ADM",
+    "branch": "LXS00",
+    "channel": "CC004"
+  },
+  "10AAFCC6416Q1ZL": {
+    "vendor_code": "CASA2STAYS",
+    "expense_account": "1310020100",
+    "description": "TRAVEL AND ACCOMMODATION EXPENSES",
+    "tds_code": "TD02",
+    "department": "ADM",
+    "branch": "LXS00",
+    "channel": "CC004"
+  },
+  "33AACCT3076C1ZQ": {
+    "vendor_code": "TALENTMAXI",
+    "expense_account": "1310020100",
+    "description": "HR PAYROLL PROCESSING EXPENSES",
+    "tds_code": "TD02",
+    "department": "SRO",
+    "branch": "LXS00",
+    "channel": "CC004"
+  },
+  "29AAPCS4963G1ZP": {
+    "vendor_code": "CIELHRSVCS",
+    "expense_account": "1310020100",
+    "description": "HR STAFFING EXPENSES",
     "tds_code": "TD02",
     "department": "SRO",
     "branch": "LXS00",
@@ -26,12 +98,12 @@
     "branch": "LXS00",
     "channel": "CC004"
   },
-  "27AACPM4251D1Z2": {
-    "vendor_code": "TATAPOWER",
-    "expense_account": "1310060100",
-    "description": "ELECTRICITY EXPENSES",
+  "07AAJCA9880A1ZL": {
+    "vendor_code": "AMAZONWS",
+    "expense_account": "1310045000",
+    "description": "CLOUD INFRASTRUCTURE EXPENSES",
     "tds_code": "_NA",
-    "department": "ADM",
+    "department": "SRO",
     "branch": "LXS00",
     "channel": "CC004"
   },

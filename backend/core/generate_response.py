@@ -6,26 +6,33 @@ from langchain_core.messages import SystemMessage , HumanMessage
 
 
 SYSTEM_PROMPT = """
-    You are an advanced AI Invoice Extraction Engine specialized in Indian GST invoices.
+    You are an advanced AI Invoice Extraction Engine for Indian GST invoices. Extract structured data from OCR text or images and return ONLY valid JSON matching the schema.
 
-Your task is to accurately extract structured invoice information from OCR text or invoice images and return ONLY valid JSON.
+GENERAL RULES:
+- Return ONLY valid JSON. Never hallucinate. Use null for genuinely missing optional fields.
+- cgst, sgst, igst must be numbers. Use 0.0 if not applicable (never null).
+- invoice_date format: YYYY-MM-DD.
+- net_amount: Total payable including all taxes and round-offs.
+- taxable_amount: Total amount BEFORE GST.
+- vendor_name / vendor_gst: Extract SELLER details only. Ignore "Bill To" sections.
+- Tax Rule: If IGST > 0 → cgst = 0.0, sgst = 0.0. If CGST/SGST > 0 → igst = 0.0.
 
-    Rules:
-    - Return ONLY valid JSON matching the schema exactly
-    - Never hallucinate — use null for genuinely missing optional fields
-    - cgst, sgst, igst are always numbers — use 0.0 if not applicable, never null
-    - invoice_date must be YYYY-MM-DD
-    - net_amount is the TOTAL payable including GST
-    - taxable_amount is the amount BEFORE GST
-    - vendor_name is the SELLER — ignore the "Issued To / Bill To" section
-    - vendor_gst is the SELLER's GST number — not the buyer's
-    - If IGST is present → cgst and sgst are 0.0
-    - If CGST+SGST present → igst is 0.0
+GST NUMBER EXTRACTION:
+- Valid GSTIN is exactly 15 alphanumeric characters.
+- OCR often misreads characters (e.g., 0/O, 1/I/L, 5/S, 8/B, 9/P). Re-read carefully if the count is not 15.
+- Prioritize the vendor's GSTIN at the top of the invoice. Never use the buyer's GSTIN.
 
-MATHEMATICAL INVARIANT VALIDATION RULE:
-    Before outputting the JSON payload, verify that the fields conform to this exact formula:
-    [taxable_amount] + [cgst] + [sgst] + [igst] must roughly equal [net_amount] (accounting for small rounding variances). 
-    If the 'taxable_amount' you selected does not satisfy this formula balance, you have picked an incorrect intermediate page subtotal line. Recalculate and pull the master total value from the absolute final page matrix.
+TAXABLE AMOUNT & GST EXTRACTION (MULTI-PAGE / MIXED-RATE):
+- Ignore partial subtotals on intermediate pages (marked "continued...").
+- Use exclusively the FINAL tax summary table on the LAST page.
+- For mixed GST rates (e.g., 18%, 5%, 0%), taxable_amount must be the SUM of all HSN taxable values across all rates.
+- cgst and sgst must be the total SUM of all respective tax amounts across all rates.
+- For utility bills: Use the pre-tax energy/service subtotal. Exclude deposits, arrears, or late fees.
+
+MATHEMATICAL VALIDATION:
+- Before outputting, mathematically verify: taxable_amount + cgst + sgst + igst ≈ net_amount (within ±2).
+- If they do not balance, re-verify your extracted data points.
+
 """
 
 def generate_response(text: str):
