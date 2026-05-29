@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { CloudUpload, Loader2 } from "lucide-react";
-import { extractInvoice, generateCsv } from "../api/invoice.js";
+import { exportExcel, extractInvoice } from "../api/invoice.js";
 import InvoicePreview from "../components/InvoicePreview.jsx";
 import Toast from "../components/Toast.jsx";
 
@@ -32,7 +32,21 @@ export default function Upload() {
 
     try {
       const { data } = await extractInvoice(files);
-      const normalizedResults = data.Results || [];
+      console.debug("/extract response", data);
+
+      const rawResults = data?.Results ?? data?.results ?? [];
+      const normalizedResults = Array.isArray(rawResults)
+        ? rawResults.map((item) => ({
+            filename: item?.filename ?? item?.fileName ?? item?.name ?? "(unknown)",
+            success:
+              item?.success ??
+              item?.Success ??
+              Boolean(item?.invoice ?? item?.Invoice ?? item?.data ?? item?.result),
+            invoice: item?.invoice ?? item?.Invoice ?? item?.data ?? item?.result ?? null,
+            error: item?.error ?? item?.detail ?? item?.message ?? null,
+          }))
+        : [];
+
       setResults(normalizedResults);
       const firstSuccessIndex = normalizedResults.findIndex(
         (item) => item.success && item.invoice
@@ -70,28 +84,43 @@ export default function Upload() {
     );
   };
 
-  const handleGenerateCsv = async () => {
-    const confirmedInvoices = results
+  const handleExportExcel = async () => {
+    const invoiceList = results
       .filter((item) => item.success && item.invoice)
       .map((item) => item.invoice);
-    if (!confirmedInvoices.length) return;
+
+    if (!invoiceList.length) return;
     setIsGenerating(true);
     setError("");
 
     try {
-      const { data } = await generateCsv(confirmedInvoices);
-      const blob = new Blob([data], { type: "text/csv" });
+      const response = await exportExcel(invoiceList);
+      const blob = new Blob([response.data], {
+        type:
+          response.headers?.["content-type"] ||
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
       const url = window.URL.createObjectURL(blob);
+
+      const contentDisposition = response.headers?.["content-disposition"];
+      const fallbackName = "journal_entries.xlsx";
+      const match = contentDisposition?.match(/filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/i);
+      const filename = decodeURIComponent(match?.[1] || match?.[2] || fallbackName);
+
       const link = document.createElement("a");
       link.href = url;
-      link.download = "journal_entries.csv";
+      link.download = filename;
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
-      setToast("CSV generated and downloaded successfully.");
+      setToast("Excel generated and downloaded successfully.");
     } catch (err) {
-      setError(err.response?.data?.detail || err.message || "CSV generation failed.");
+      setError(
+        err.response?.data?.detail ||
+          err.message ||
+          "Excel generation failed."
+      );
     } finally {
       setIsGenerating(false);
     }
@@ -182,6 +211,7 @@ export default function Upload() {
                   key={`${item.filename}-${index}`}
                   type="button"
                   onClick={() => setActiveIndex(index)}
+                  title={item.success ? item.filename : item.error || item.filename}
                   className={`flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left text-sm transition ${
                     index === activeIndex
                       ? "border-indigo-500/60 bg-indigo-500/10 text-indigo-100"
@@ -208,11 +238,11 @@ export default function Upload() {
       {results.some((item) => item.success && item.invoice) && (
         <button
           type="button"
-          onClick={handleGenerateCsv}
+          onClick={handleExportExcel}
           disabled={isGenerating}
           className="w-full rounded-2xl bg-indigo-500 px-6 py-4 text-sm font-semibold text-white shadow-lg shadow-indigo-500/30 transition hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-70"
         >
-          {isGenerating ? "Generating CSV..." : "Generate CSV"}
+          {isGenerating ? "Generating Excel..." : "Export Excel"}
         </button>
       )}
 

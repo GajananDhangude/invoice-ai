@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: import.meta.env.VITE_API_URL || "/api",
 });
 
 export const extractInvoice = (files) => {
@@ -9,10 +9,11 @@ export const extractInvoice = (files) => {
   files.forEach((file) => {
     formData.append("files", file);
   });
-  return api.post("/extract", formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
+  return api.post("/extract", formData);
 };
 
-export const generateCsv = (invoices) =>
-  api.post("/generate-csv", invoices, { responseType: "blob" });
+export const exportExcel = (invoiceList) => {
+  return api.post("/export-excel", invoiceList, {
+    responseType: "blob",
+  });
+};
