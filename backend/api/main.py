@@ -1,10 +1,15 @@
+
 from fastapi import FastAPI , UploadFile , File , HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import Response
-from core.csv_writer import generate_csv
-from core.journal_builder import build_journal_entries
+from fastapi.responses import StreamingResponse
+import io
+from core.journal_builder import build_journal_excel
 from models.invoice_model import InvoiceExtract
 from core.generate_response import generate_response
+from config.config_acc import ACC_PERIOD
+from services.text_extractor import extract_with_fitz
+from services.extract_invoice import extract_text
+import json
 import os
 import uvicorn
 
@@ -28,6 +33,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+with open("config/vendor_master.json") as f:
+    VENDOR_MASTER = json.load(f)
 
 
 @app.get("/")
@@ -57,7 +65,16 @@ async def extract(files: list[UploadFile] = File(...)):
  
         try:
             pdf_bytes = await file.read()
-            invoice = generate_response(pdf_bytes)
+            
+            text = extract_with_fitz(pdf_bytes)
+            if text and len(text) > 100:
+                print("Successfully extracted text with PyMuPDF")
+                invoice = generate_response(text)
+            
+            else:
+                print("Falling back to LLM for extraction")
+                invoice  = extract_text(pdf_bytes)
+
             results.append({
                 "filename":file.filename,
                 "success": True,
@@ -72,29 +89,53 @@ async def extract(files: list[UploadFile] = File(...)):
             })
 
     return {"Total Files": len(files), "Results": results}
-    
+
+
+
+@app.post("/export-excel")
+async def export(invoice_list: list[InvoiceExtract]):
+    """
+    Receives confirmed invoice JSON (from the /extract step) and
+    returns a formatted Excel journal entry file for download.
+    """
+    invoices = []
  
-@app.post("/generate-csv")
-async def generate_csv_endpoint(invoices: list[InvoiceExtract]):
-    """
-    Send confirmed invoice data → returns CSV file for download.
-    React calls this after user reviews extracted fields.
-    """
-    try:
-        all_rows = []
-        for invoice in invoices:
-            rows = build_journal_entries(invoice)
-            all_rows.extend(rows)
-        csv_bytes = generate_csv(all_rows)
-        filename = f"journal_entries.csv"
-        return Response(
-            content=csv_bytes,
-            media_type="text/csv",
-            headers={"Content-Disposition": f"attachment; filename={filename}"}
-        )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    
+    for invoice in invoice_list:
+        try:
+            data = invoice.model_dump()
+ 
+            vendor_config = VENDOR_MASTER.get(data["vendor_gst"], VENDOR_MASTER["DEFAULT"])
+ 
+            if data["vendor_gst"] not in VENDOR_MASTER:
+                vendor_config = {
+                    **VENDOR_MASTER["DEFAULT"],
+                    "description": data["vendor_name"].upper() + " EXPENSES"
+                }
+ 
+            invoices.append({
+                **data,
+                **vendor_config,
+                "acc_period": ACC_PERIOD,
+                "narration": data.get("billing_period") or "",
+            })
+ 
+        except Exception as e:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Error processing invoice {invoice.invoice_number}: {str(e)}"
+            )
+ 
+    if not invoices:
+        raise HTTPException(status_code=422, detail={"message": "No invoices provided"})
+ 
+    excel_bytes = build_journal_excel(invoices)
+ 
+    return StreamingResponse(
+        io.BytesIO(excel_bytes),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": "attachment; filename=journal_entries.xlsx"}
+    )
+
 
 if __name__ =="__main__":
 
