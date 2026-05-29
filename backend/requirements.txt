@@ -3,9 +3,12 @@ uvicorn
 python-multipart
 python-dotenv
 pydantic
-docling
+openpyxl
+pandas
 pymupdf
 langchain
 langchain-community
 langchain-core
-pandas
+langchain_google_genai
+langchain_groq
+google-genai
