@@ -1,7 +1,6 @@
 import os
-from services.docling_extractor import extract_text
 from services.llm import llm
-# from core.extract_invoice import extract_text
+
 from models.invoice_model import InvoiceExtract
 from langchain_core.messages import SystemMessage , HumanMessage
 
@@ -29,9 +28,9 @@ MATHEMATICAL INVARIANT VALIDATION RULE:
     If the 'taxable_amount' you selected does not satisfy this formula balance, you have picked an incorrect intermediate page subtotal line. Recalculate and pull the master total value from the absolute final page matrix.
 """
 
-def generate_response(pdf_bytes: bytes):
+def generate_response(text: str):
 
-    text = extract_text(pdf_bytes)  # Replace with your image file path
+    # text = extract_text(pdf_bytes)  # Replace with your image file path
 
 
     res = llm.with_structured_output(InvoiceExtract).invoke([
@@ -42,9 +41,9 @@ def generate_response(pdf_bytes: bytes):
 
     return res
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
 
-    with open('C:/Users/dhang/Downloads/VT36546 - Saanvi Trading.pdf', 'rb') as f:
-        pdf_bytes = f.read()
-    res = generate_response(pdf_bytes)
-    print(res)
+#     with open('C:/Users/dhang/Downloads/VT36546 - Saanvi Trading.pdf', 'rb') as f:
+#         pdf_bytes = f.read()
+#     res = generate_response(pdf_bytes)
+#     print(res)
